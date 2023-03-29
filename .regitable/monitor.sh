@@ -1,34 +1,45 @@
 #!/bin/bash
 
-SCRIPT=$(dirname $(realpath $0))
-source $SCRIPT/config
+set -euo pipefail
 
-exec {TICKET_LOCK}>$TICKET_LOCKFILE
+SCRIPT="$(dirname "$(realpath "$0")")"
 
-inotifywait -m -q --format '%f' -e DELETE $DATA | \
-while read FILE
+source "$SCRIPT/config"
+
+exec {TICKET_LOCK}> "$TICKET_LOCKFILE"
+
+while read -r FILE
 do
   uuid=""
 
-  if [[ $FILE == *".lock" ]]; then
-    uuid=${FILE%.lock}
-  elif [[ $FILE == *".uploading" ]]; then
-    uuid=${FILE%.uploading}
+  echo "Processing: ${FILE}"
+
+  if [[ $FILE == *".uploading" ]]; then
+    uuid="${FILE%.uploading}"
 
     # remove trailing _xx where xx is a number
-    uuid=$(echo $uuid | sed 's/_.*$//')
+    uuid="$(echo "$uuid" | sed 's/_.*$//')"
+  else
+    for extension in lock content pagedata metadata; do
+      if [[ $FILE == *".${extension}" ]]; then
+        uuid="${FILE%.${extension}}"
+      fi
+    done
   fi
+
+  echo "Determined UUID: ${uuid}"
 
   # test uuid for correct format (excludes "trash" etc)
-  test=$(echo $uuid | sed 's/^........-....-....-....-............$/OK/')
+  test=$(echo "$uuid" | sed 's/^........-....-....-....-............$/OK/')
 
-  if [[ $uuid == "trash" || $test == "OK" ]]; then
+  if [[ "$uuid" == "trash" || "$test" == "OK" ]]; then
+    echo "Writing ticket: $TICKET/$uuid"
 
     flock -x $TICKET_LOCK
-    echo `date +%s` > $TICKET/$uuid
+    date "+%s" > "$TICKET/$uuid"
     flock -u $TICKET_LOCK
 
-    $GBUP/acp.sh &
+    echo "Executing push script"
+    "$GBUP/acp.sh" &
   fi
-
-done
+done < <(inotifywait -m -q --format '%f' -e DELETE -e CLOSE_WRITE "$DATA")

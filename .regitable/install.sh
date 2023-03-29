@@ -78,6 +78,7 @@ chmod +x $GBUP/acp.sh
 # ----------------------------------------------
 [ ! -f /opt/bin/inotifywait ] && opkg install inotifywait
 [ ! -f /opt/bin/git ] && opkg install git
+[ ! -f /opt/bin/jq ] && opkg install jq
 
 
 # ----------------------------------------------
