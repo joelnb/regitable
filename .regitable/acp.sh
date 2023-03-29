@@ -22,7 +22,7 @@ Changes to documents included:"
 
   staged="$(git diff --staged --name-only | wc -l)"
 
-  if (( $staged > 0 )); then
+  if (( staged > 0 )); then
     echo -e "Creating commit with message:\n$message\n$file_details"
     git commit -q -m "$message
 $file_details"
@@ -33,7 +33,7 @@ function git_push() {
   if (( $(git remote | wc -l) > 0 )); then
     committed=$(git log origin/master..master --name-only | wc -l)
 
-    if (( $committed > 0 )); then
+    if (( committed > 0 )); then
       if ping -q -c 1 -W 1 8.8.8.8 >/dev/null; then
         git push -q
       fi
@@ -49,7 +49,7 @@ flock -n "$GIT_LOCK" || exit 0
 count="40"
 interval="2"
 
-while (( $count > 0 )); do
+while (( count > 0 )); do
   flock -x "$TICKET_LOCK" || exit 1
 
   # get oldest ticket
@@ -69,7 +69,7 @@ while (( $count > 0 )); do
   diff="(( $now - $stamp ))"
 
   # debounce period over, then go
-  if (( $diff > 2 )); then
+  if (( diff > 2 )); then
     echo "Processing ticket: ${ticket}"
     rm "$TICKET/$ticket"
     uuid="$ticket"

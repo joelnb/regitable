@@ -22,7 +22,7 @@ do
   else
     for extension in lock content pagedata metadata; do
       if [[ $FILE == *".${extension}" ]]; then
-        uuid="${FILE%.${extension}}"
+        uuid="${FILE%."${extension}"}"
       fi
     done
   fi
