@@ -6,13 +6,19 @@ SCRIPT="$(dirname "$(realpath "$0")")"
 
 source "$SCRIPT/config"
 
+print_verbose() {
+  if [ "${REGITABLE_VERBOSE:-false}" = "true" ]; then
+    echo "$@"
+  fi
+}
+
 exec {TICKET_LOCK}> "$TICKET_LOCKFILE"
 
 while read -r FILE
 do
   uuid=""
 
-  echo "Processing: ${FILE}"
+  print_verbose "Processing: ${FILE}"
 
   if [[ $FILE == *".uploading" ]]; then
     uuid="${FILE%.uploading}"
@@ -27,19 +33,19 @@ do
     done
   fi
 
-  echo "Determined UUID: ${uuid}"
+  print_verbose "Determined UUID: ${uuid}"
 
   # test uuid for correct format (excludes "trash" etc)
   test=$(echo "$uuid" | sed 's/^........-....-....-....-............$/OK/')
 
   if [[ "$uuid" == "trash" || "$test" == "OK" ]]; then
-    echo "Writing ticket: $TICKET/$uuid"
+    print_verbose "Writing ticket: $TICKET/$uuid"
 
     flock -x $TICKET_LOCK
     date "+%s" > "$TICKET/$uuid"
     flock -u $TICKET_LOCK
 
-    echo "Executing push script"
+    print_verbose "Executing push script"
     "$GBUP/acp.sh" &
   fi
 done < <(inotifywait -m -q --format '%f' -e DELETE -e CLOSE_WRITE "$DATA")

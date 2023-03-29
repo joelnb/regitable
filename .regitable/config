@@ -6,6 +6,12 @@ GIT_EMAIL="my-name@my-domain.com"
 GIT_REMOTE="git@gitlab.com:my-name/my-repo.git"
 
 # ----------------------------------------------
+# debugging
+# ----------------------------------------------
+
+REGITABLE_VERBOSE="false"
+
+# ----------------------------------------------
 # environment
 # ----------------------------------------------
 HOME="/home/root"

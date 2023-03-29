@@ -6,6 +6,12 @@ SCRIPT="$(dirname "$(realpath "$0")")"
 
 source "$SCRIPT/config"
 
+print_verbose() {
+  if [ "${REGITABLE_VERBOSE:-false}" = "true" ]; then
+    echo "$@"
+  fi
+}
+
 exec {GIT_LOCK}> "$GIT_LOCKFILE"
 exec {TICKET_LOCK}> "$TICKET_LOCKFILE"
 
@@ -18,12 +24,12 @@ function git_commit() {
 
 Changes to documents included:"
 
-  file_details="$(git status -s | grep -E '^(A|M).*\.metadata$' | sed -E 's/^(A|M)\s+//' | xargs -n1 jq -r '. | "- \(.visibleName)"')"
+  file_details="$(git status -s | grep -E '^(A|M).*\.metadata$' | sed -E 's@^(A|M)\s+@'"${WORK}"'/@' | xargs -n1 jq -r '. | "- \(.visibleName)"')"
 
   staged="$(git diff --staged --name-only | wc -l)"
 
   if (( staged > 0 )); then
-    echo -e "Creating commit with message:\n$message\n$file_details"
+    print_verbose -e "Creating commit with message:\n$message\n$file_details"
     git commit -q -m "$message
 $file_details"
   fi
@@ -58,7 +64,7 @@ while (( count > 0 )); do
 
   # no more tickets, then push and exit
   if [[ $ticket == "" ]]; then
-    echo "No more tickets left to process - pushing current changes"
+    print_verbose "No more tickets left to process - pushing current changes"
     git_push
     exit 0
   fi
